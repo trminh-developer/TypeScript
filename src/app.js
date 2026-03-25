@@ -1,30 +1,17 @@
 import { Product, ProductManager } from './models.js';
-// ================================================
-// Dữ liệu mẫu ban đầu
-// ================================================
-const initialProducts = [
-    new Product('1', 'Essence Mascara Lash Princess', 9.99, 'beatiful', './Essence.png'),
-    new Product('2', 'Eyeshadow Palette with Mirror', 19.99, 'beatiful', './Eyeshaddow.png'),
-    new Product('3', 'Powder Canister', 14.99, 'beatiful', './Powder.png'),
-    new Product('4', 'Red Lipstick', 12.99, 'beatiful', './Red-Lip.png'),
-    new Product('5', 'Red Nail Posish', 8.99, 'beatiful', './Red-Nail.png'),
-    new Product('6', 'Calvin Klein CK One', 49.99, 'fragrances', './Calvin.png'),
-    new Product('7', 'Chanel Coco Noir Eau De', 129.99, 'fragrances', './Coco-Chanel.png'),
-    new Product('8', 'Sneakers', 89.99, 'fragrances', './Dior.png'),
-    new Product('9', 'Eyeshadow Palette with Mirror', 19.99, 'beatiful', './Eyeshaddow.png'),
-    new Product('10', 'Red Lipstick', 12.99, 'beatiful', './Red-Lip.png'),
-    new Product('11', 'Calvin Klein CK One', 49.99, 'fragrances', './Calvin.png'),
-    new Product('12', 'Sneakers', 89.99, 'fragrances', './Dior.png'),
-    new Product('13', 'Essence Mascara Lash Princess', 9.99, 'beatiful', './Essence.png'),
-    new Product('14', 'Powder Canister', 14.99, 'beatiful', './Powder.png'),
-    new Product('15', 'Red Nail Posish', 8.99, 'beatiful', './Red-Nail.png'),
-    new Product('16', 'Chanel Coco Noir Eau De', 129.99, 'fragrances', './Coco-Chanel.png'),
-];
-// Khởi tạo ProductManager
+// Tải dữ liệu từ LocalStorage
+function loadProducts() {
+    const savedData = localStorage.getItem('my_products');
+    if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        return parsedData.map((p) => new Product(p.id, p.name, p.price, p.category, p.image));
+    }
+    return [];
+}
+const initialProducts = loadProducts();
 const manager = new ProductManager(initialProducts);
-// ================================================
-// Lấy các phần tử DOM — ID khớp với index.html
-// ================================================
+let editingProductId = null;
+// Lấy DOM Elements
 const productGrid = document.getElementById('product-grid');
 const searchInput = document.getElementById('search-input');
 const categorySelect = document.getElementById('category-select');
@@ -44,47 +31,30 @@ const errName = document.getElementById('err-name');
 const errPrice = document.getElementById('err-price');
 const errCategory = document.getElementById('err-category');
 const errImage = document.getElementById('err-image');
-// Render sản phẩm + cập nhật pagination
+// Render Giao diện
 function render() {
     const pageProducts = manager.getCurrentPageProducts();
-    productGrid.innerHTML = pageProducts.map(p => p.toCardHTML()).join('');
+    if (pageProducts.length === 0) {
+        productGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666; padding: 2rem;">Chưa có sản phẩm nào. Bấm "Add New" để thêm nhé!</p>';
+    }
+    else {
+        productGrid.innerHTML = pageProducts.map(p => p.toCardHTML()).join('');
+    }
     const current = manager.getCurrentPage();
     const total = manager.getTotalPages();
     pageInfo.textContent = `${current} / ${total}`;
-    // Sửa lại thành <= 1 và >= total cho an toàn tuyệt đối
     btnPrev.disabled = current <= 1;
     btnNext.disabled = current >= total;
 }
-// ================================================
-// Populate category dropdown
-// ================================================
 function populateCategorySelect() {
-    const existing = Array.from(categorySelect.options).map(o => o.value);
+    categorySelect.innerHTML = '<option value="all">Tất cả danh mục</option>';
     manager.getCategories().forEach(cat => {
-        if (!existing.includes(cat)) {
-            const option = document.createElement('option');
-            option.value = cat;
-            option.textContent = cat;
-            categorySelect.appendChild(option);
-        }
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categorySelect.appendChild(option);
     });
 }
-// ================================================
-// Modal helpers
-// ================================================
-function openModal() {
-    addModal.style.display = 'flex';
-    addProductForm.reset();
-    clearErrors();
-}
-function closeModal() {
-    addModal.style.display = 'none';
-    addProductForm.reset();
-    clearErrors();
-}
-// ================================================
-// Validation
-// ================================================
 function clearErrors() {
     [errName, errPrice, errCategory, errImage].forEach(el => el.style.display = 'none');
 }
@@ -110,50 +80,83 @@ function validateForm() {
     }
     return valid;
 }
-// ================================================
-// Event Listeners
-// ================================================
-// Mở / đóng modal
-btnAddNew.addEventListener('click', openModal);
+// Quản lý Modal
+function openAddModal() {
+    editingProductId = null;
+    const modalTitle = document.querySelector('#add-modal h2');
+    if (modalTitle)
+        modalTitle.textContent = 'Tạo sản phẩm';
+    addProductForm.reset();
+    clearErrors();
+    addModal.style.display = 'flex';
+}
+function closeModal() {
+    addModal.style.display = 'none';
+    addProductForm.reset();
+    clearErrors();
+}
+// Bắt sự kiện Click cho nút Sửa & Xóa
+productGrid.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target.classList.contains('btn-delete')) {
+        const id = target.getAttribute('data-id');
+        if (id && confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
+            manager.deleteProduct(id);
+            manager.filterProducts(searchInput.value, categorySelect.value);
+            populateCategorySelect();
+            render();
+        }
+    }
+    if (target.classList.contains('btn-edit')) {
+        const id = target.getAttribute('data-id');
+        if (id) {
+            const product = manager.getProductById(id);
+            if (product) {
+                editingProductId = product.id;
+                inputName.value = product.name;
+                inputPrice.value = product.price.toString();
+                inputCategory.value = product.category;
+                inputImage.value = product.image;
+                const modalTitle = document.querySelector('#add-modal h2');
+                if (modalTitle)
+                    modalTitle.textContent = 'Cập nhật sản phẩm';
+                addModal.style.display = 'flex';
+                clearErrors();
+            }
+        }
+    }
+});
+// Gắn các sự kiện cơ bản
+btnAddNew.addEventListener('click', openAddModal);
 btnCloseModal.addEventListener('click', closeModal);
 btnCancel.addEventListener('click', closeModal);
-// Đóng modal khi click ra ngoài overlay
 addModal.addEventListener('click', (e) => {
     if (e.target === addModal)
         closeModal();
 });
-// Submit form — thêm sản phẩm mới
+// Xử lý Form Submit (Cho cả Thêm và Sửa)
 addProductForm.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!validateForm())
         return;
-    const newProduct = new Product(Date.now().toString(), inputName.value.trim(), parseFloat(inputPrice.value), inputCategory.value.trim(), inputImage.value.trim());
-    manager.addProduct(newProduct);
+    if (editingProductId) {
+        const updatedProduct = new Product(editingProductId, inputName.value.trim(), parseFloat(inputPrice.value), inputCategory.value.trim(), inputImage.value.trim());
+        manager.updateProduct(updatedProduct);
+    }
+    else {
+        const newProduct = new Product(Date.now().toString(), inputName.value.trim(), parseFloat(inputPrice.value), inputCategory.value.trim(), inputImage.value.trim());
+        manager.addProduct(newProduct);
+    }
     populateCategorySelect();
-    // FIX: Gọi filter lại để tự động cập nhật danh sách hiển thị và nhảy về Trang 1
     manager.filterProducts(searchInput.value, categorySelect.value);
     closeModal();
     render();
 });
-// Search
-searchInput.addEventListener('input', () => {
-    manager.filterProducts(searchInput.value, categorySelect.value);
-    render();
-});
-// Category filter
-categorySelect.addEventListener('change', () => {
-    manager.filterProducts(searchInput.value, categorySelect.value);
-    render();
-});
-// Pagination
-btnPrev.addEventListener('click', () => {
-    manager.prevPage();
-    render();
-});
-btnNext.addEventListener('click', () => {
-    manager.nextPage();
-    render();
-});
-// Khởi chạy lần đầu
+// Tìm kiếm & Lọc & Phân trang
+searchInput.addEventListener('input', () => { manager.filterProducts(searchInput.value, categorySelect.value); render(); });
+categorySelect.addEventListener('change', () => { manager.filterProducts(searchInput.value, categorySelect.value); render(); });
+btnPrev.addEventListener('click', () => { manager.prevPage(); render(); });
+btnNext.addEventListener('click', () => { manager.nextPage(); render(); });
+// Chạy lần đầu
 populateCategorySelect();
 render();
