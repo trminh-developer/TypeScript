@@ -13,17 +13,17 @@
 ## 🗂️ Cấu trúc dự án
 
 ```
-project/
-├── index.html          # Giao diện HTML chính
+Products-Management-Project/
+├── index.html                      # Giao diện HTML chính
 ├── image/
-│   └── alexstore.png   # Logo 
-├── System_Diagram_Design/      # Thiết kế sơ đồ hệ thống
+│   └── alexstore.png               # Logo 
+├── System_Diagram_Design/          # Thiết kế sơ đồ hệ thống
 │   └── Product Project.drawio
 ├── css/
-│   └── style.css       # Toàn bộ styles của ứng dụng
+│   └── style.css                   # Toàn bộ styles của ứng dụng
 └── src/
-    ├── main.js       # Logic JavaScript (ES6 Classes)
-    └── main.ts       # Phiên bản TypeScript (type-safe)
+    ├── main.js                     # Logic JavaScript (ES6 Classes)
+    └── main.ts                     # Phiên bản TypeScript (type-safe)
 ```
 
 ---
