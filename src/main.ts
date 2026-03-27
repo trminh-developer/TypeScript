@@ -168,32 +168,7 @@ function loadFromStorage(): Product[] {
     return [];
 }
 
-const DEMO: Product[] = [
-
-    new Product(
-        "1",
-        "Giày Nike Air Max",
-        129.99,
-        "Giày",
-        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80"
-    ),
-
-    new Product(
-        "2",
-        "Áo Polo Ralph Lauren",
-        89.99,
-        "Thời trang",
-        "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=400&q=80"
-    ),
-
-    new Product(
-        "3",
-        "iPhone 15 Pro",
-        999,
-        "Điện tử",
-        "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&q=80"
-    )
-];
+const DEMO: Product[] = [];
 
 const stored = loadFromStorage();
 
