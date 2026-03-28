@@ -1,4 +1,3 @@
-// ✅ Fix 1: Bỏ "export" — không dùng CommonJS, Vite xử lý bundling
 class Product {
     id: string;
     name: string;
@@ -49,7 +48,7 @@ class ProductManager {
         this.products = [...initial];
         this.filteredProducts = [...initial];
         this.currentPage = 1;
-        this.itemsPerPage = 4; // ✅ Fix 2: Khôi phục 4 (TS gốc sai là 8)
+        this.itemsPerPage = 4;
         this.categories = [];
         this._updateCategories();
     }
@@ -95,7 +94,7 @@ class ProductManager {
     prev(): void { if (this.currentPage > 1) this.currentPage--; }
 }
 
-// ─── Storage ────────────────────────────────────────────────
+//  Storage
 function loadFromStorage(): Product[] {
     try {
         const d = localStorage.getItem('pm_products');
@@ -105,7 +104,7 @@ function loadFromStorage(): Product[] {
     return [];
 }
 
-// ─── Init ───────────────────────────────────────────────────
+// Init 
 const DEMO: Product[] = [];
 const stored = loadFromStorage();
 const manager = new ProductManager(stored.length ? stored : DEMO);
@@ -113,8 +112,7 @@ const manager = new ProductManager(stored.length ? stored : DEMO);
 let editingId: string | null = null;
 let pendingDeleteId: string | null = null;
 
-// ─── DOM refs ───────────────────────────────────────────────
-// ✅ Fix 3: Bổ sung đầy đủ DOM refs — TS gốc thiếu modal, form, error elements
+//  DOM refs
 const grid = document.getElementById('product-grid') as HTMLElement;
 const search = document.getElementById('search-input') as HTMLInputElement;
 const catSel = document.getElementById('category-select') as HTMLSelectElement;
@@ -133,7 +131,7 @@ const eP = document.getElementById('err-price') as HTMLElement;
 const eC = document.getElementById('err-category') as HTMLElement;
 const eI = document.getElementById('err-image') as HTMLElement;
 
-// ─── Render ─────────────────────────────────────────────────
+//  Render 
 function render(): void {
     const pp = manager.page();
     grid.innerHTML = pp.length
@@ -145,7 +143,6 @@ function render(): void {
     bNext.disabled = cur >= tot;
 }
 
-// ✅ Fix 3: Bổ sung populateCat() bị thiếu hoàn toàn trong TS gốc
 function populateCat(): void {
     const cur = catSel.value;
     catSel.innerHTML = '<option value="all">Tất cả danh mục</option>';
@@ -156,7 +153,6 @@ function populateCat(): void {
     catSel.value = manager.categories.includes(cur) ? cur : 'all';
 }
 
-// ✅ Fix 3: Bổ sung form helpers bị thiếu
 function clearErr(): void {
     [eN, eP, eC, eI].forEach(e => e.style.display = 'none');
     [iName, iPrice, iCat, iImg].forEach(i => i.classList.remove('error'));
@@ -174,7 +170,6 @@ function validate(): boolean {
     return ok;
 }
 
-// ✅ Fix 3: Bổ sung modal helpers bị thiếu
 function openAdd(): void {
     editingId = null; modalTitle.textContent = 'Tạo sản phẩm'; clearForm();
     addModal.classList.add('active');
@@ -199,7 +194,6 @@ function handleSave(): void {
     populateCat(); closeAdd(); render();
 }
 
-// ✅ Fix 3: Bổ sung toàn bộ event listeners bị thiếu
 document.getElementById('btn-add-new')!.addEventListener('click', openAdd);
 document.getElementById('btn-close-modal')!.addEventListener('click', closeAdd);
 document.getElementById('btn-cancel')!.addEventListener('click', closeAdd);
@@ -236,5 +230,5 @@ catSel.addEventListener('change', () => { manager.filter(search.value, catSel.va
 bPrev.addEventListener('click', () => { manager.prev(); render(); });
 bNext.addEventListener('click', () => { manager.next(); render(); });
 
-// ─── Boot ────────────────────────────────────────────────────
+// Boot 
 manager.filter('', 'all', true); populateCat(); render();
